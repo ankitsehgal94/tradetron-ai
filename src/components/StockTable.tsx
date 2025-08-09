@@ -66,7 +66,7 @@ export default function StockTable({ stocks, onViewChart, onAddToWatchlist }: St
   const SortButton = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
     <button
       onClick={() => handleSort(field)}
-      className="flex items-center gap-1 font-medium hover:text-blue-600 transition-colors"
+      className="flex items-center gap-1 font-medium text-gray-900 dark:text-gray-100 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
     >
       {children}
       {sortField === field && (
@@ -96,42 +96,42 @@ export default function StockTable({ stocks, onViewChart, onAddToWatchlist }: St
         </Button>
       </div>
 
-      <div className="border rounded-lg overflow-hidden">
+      <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-900">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b">
+            <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
               <tr>
-                <th className="px-4 py-3 text-left">
+                <th className="px-4 py-3 text-left text-gray-900 dark:text-gray-100">
                   <SortButton field="Symbol">Symbol</SortButton>
                 </th>
-                <th className="px-4 py-3 text-left">
+                <th className="px-4 py-3 text-left text-gray-900 dark:text-gray-100">
                   <SortButton field="Current Price">Price</SortButton>
                 </th>
-                <th className="px-4 py-3 text-left">
+                <th className="px-4 py-3 text-left text-gray-900 dark:text-gray-100">
                   <SortButton field="RSI (14)">RSI</SortButton>
                 </th>
-                <th className="px-4 py-3 text-left">
+                <th className="px-4 py-3 text-left text-gray-900 dark:text-gray-100">
                   <SortButton field="Drawdown %">Drawdown</SortButton>
                 </th>
-                <th className="px-4 py-3 text-left">
+                <th className="px-4 py-3 text-left text-gray-900 dark:text-gray-100">
                   <SortButton field="Current Volume">Volume</SortButton>
                 </th>
-                <th className="px-4 py-3 text-left">
+                <th className="px-4 py-3 text-left text-gray-900 dark:text-gray-100">
                   <SortButton field="Momentum Score">Score</SortButton>
                 </th>
-                <th className="px-4 py-3 text-left">Actions</th>
+                <th className="px-4 py-3 text-left text-gray-900 dark:text-gray-100">Actions</th>
               </tr>
             </thead>
             <tbody>
               {sortedStocks.map((stock, index) => (
-                <tr key={stock.Symbol} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                <tr key={stock.Symbol} className={index % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-800'}>
                   <td className="px-4 py-3 font-medium">
                     <div>
-                      <div className="font-medium">{stock.Symbol}</div>
-                      <div className="text-sm text-gray-500">{stock.Name}</div>
+                      <div className="font-medium text-gray-900 dark:text-gray-100">{stock.Symbol}</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">{stock.Name}</div>
                     </div>
                   </td>
-                  <td className="px-4 py-3">₹{stock["Current Price"].toFixed(2)}</td>
+                  <td className="px-4 py-3 text-gray-900 dark:text-gray-100">₹{stock["Current Price"].toFixed(2)}</td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-1 rounded text-sm ${
                       stock["RSI (14)"] < 30 ? 'bg-green-100 text-green-800' :
@@ -150,7 +150,7 @@ export default function StockTable({ stocks, onViewChart, onAddToWatchlist }: St
                       {stock["Drawdown %"].toFixed(1)}%
                     </span>
                   </td>
-                  <td className="px-4 py-3">{stock["Current Volume"].toLocaleString()}</td>
+                  <td className="px-4 py-3 text-gray-900 dark:text-gray-100">{stock["Current Volume"].toLocaleString()}</td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-1 rounded text-sm ${
                       stock["Momentum Score"] >= 70 ? 'bg-green-100 text-green-800' :
