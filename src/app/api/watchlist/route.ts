@@ -1,21 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { watchlistStorage } from '@/lib/watchlistStorage';
 
 // Since we bypassed auth, we'll use a mock user ID
 const MOCK_USER_ID = 'demo-user-1';
 
 export async function GET(request: NextRequest) {
   try {
-    const watchlist = await prisma.watchlist.findMany({
-      where: {
-        userId: MOCK_USER_ID,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    const watchlist = await watchlistStorage.findMany(MOCK_USER_ID);
 
-    return NextResponse.json(watchlist, {
+    // Sort by createdAt desc (newest first)
+    const sortedWatchlist = watchlist.sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+
+    return NextResponse.json(sortedWatchlist, {
       status: 200,
     });
   } catch (error) {
@@ -45,14 +43,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if already in watchlist
-    const existing = await prisma.watchlist.findUnique({
-      where: {
-        userId_symbol: {
-          userId: MOCK_USER_ID,
-          symbol: symbol,
-        },
-      },
-    });
+    const existing = await watchlistStorage.findUnique(MOCK_USER_ID, symbol);
 
     if (existing) {
       return NextResponse.json(
@@ -62,20 +53,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Create watchlist entry
-    const watchlistItem = await prisma.watchlist.create({
-      data: {
-        userId: MOCK_USER_ID,
-        symbol,
-        metrics: {
-          name,
-          currentPrice,
-          rsi,
-          drawdown,
-          volume,
-          momentumScore,
-          addedAt: new Date().toISOString(),
-          ...metrics, // Include any additional metrics
-        },
+    const watchlistItem = await watchlistStorage.create({
+      userId: MOCK_USER_ID,
+      symbol,
+      metrics: {
+        name,
+        currentPrice,
+        rsi,
+        drawdown,
+        volume,
+        momentumScore,
+        addedAt: new Date().toISOString(),
+        ...metrics, // Include any additional metrics
       },
     });
 

@@ -10,3 +10,5 @@
 - Updated application to work with real stock API: integrated with http://127.0.0.1:8000/scan-cached endpoint, updated StockData interface to match real API response with Indian stock data including RSI, drawdown %, momentum score, volume metrics, and sector information, bypassed authentication for direct dashboard access
 - Fixed text visibility issues in stock table: added proper text colors for light/dark mode, improved contrast for headers and table content, updated sort buttons with proper hover states
 - Implemented complete watchlist feature: created API routes for CRUD operations, added WatchlistTable component with sorting and remove functionality, integrated real-time state management, updated StockTable to show watchlist status, added watchlist count to tab badges
+- Fixed database dependency by implementing in-memory storage solution for demo purposes, resolved watchlist API errors
+- Enhanced chart modal UX: added background click to close, ESC key support, improved dark mode styling and accessibility

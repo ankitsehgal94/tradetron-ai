@@ -28,6 +28,20 @@ export default function StockChart({ symbol, isOpen, onClose }: StockChartProps)
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
+      
+      // Handle ESC key press
+      const handleEscKey = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          onClose();
+        }
+      };
+      
+      document.addEventListener('keydown', handleEscKey);
+      
+      return () => {
+        document.body.style.overflow = 'unset';
+        document.removeEventListener('keydown', handleEscKey);
+      };
     } else {
       document.body.style.overflow = 'unset';
     }
@@ -35,17 +49,27 @@ export default function StockChart({ symbol, isOpen, onClose }: StockChartProps)
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen]);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    // Only close if clicking the backdrop itself, not the modal content
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg w-full max-w-6xl h-[80vh] flex flex-col">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      onClick={handleBackdropClick}
+    >
+      <div className="bg-white dark:bg-gray-900 rounded-lg w-full max-w-6xl h-[80vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-4">
-            <h2 className="text-xl font-semibold">{symbol} Chart</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{symbol} Chart</h2>
             <div className="flex gap-1">
               {timeframes.map((tf) => (
                 <Button

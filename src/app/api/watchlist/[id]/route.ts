@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { watchlistStorage } from '@/lib/watchlistStorage';
 
 // Since we bypassed auth, we'll use a mock user ID
 const MOCK_USER_ID = 'demo-user-1';
@@ -12,11 +12,7 @@ export async function DELETE(
     const { id } = await params;
 
     // Find the watchlist item to ensure it belongs to the user
-    const watchlistItem = await prisma.watchlist.findUnique({
-      where: {
-        id,
-      },
-    });
+    const watchlistItem = await watchlistStorage.findById(id);
 
     if (!watchlistItem) {
       return NextResponse.json(
@@ -33,11 +29,14 @@ export async function DELETE(
     }
 
     // Delete the watchlist item
-    await prisma.watchlist.delete({
-      where: {
-        id,
-      },
-    });
+    const deleted = await watchlistStorage.delete(id);
+
+    if (!deleted) {
+      return NextResponse.json(
+        { error: 'Failed to delete watchlist item' },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json(
       { message: 'Removed from watchlist' },
