@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import StockDashboard from "@/components/StockDashboard";
 
 export const dynamic = "force-dynamic";
 
@@ -26,18 +27,18 @@ export default async function Page() {
 
       <main className="flex-1 flex flex-col w-full mx-auto">
         <ClientProvider>
-          <div className="flex-1 flex items-start justify-center  bg-gradient-to-b from-white to-neutral-50 dark:from-neutral-900 dark:to-neutral-950">
+          <div className="flex-1 flex items-start justify-center bg-gradient-to-b from-white to-neutral-50 dark:from-neutral-900 dark:to-neutral-950">
             {session ? (
-              // Authenticated View
-              <section className="max-w-7xl w-full space-y-8 animate-fade-in">
-                <h1> Welcome {session.user?.name}</h1>
-              </section>
+              // Authenticated View - Stock Dashboard
+              <div className="max-w-7xl w-full p-6">
+                <StockDashboard user={session.user} />
+              </div>
             ) : (
               // Marketing View
               <section className="max-w-7xl w-full space-y-8 animate-fade-in">
                 <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
                   <h1 className="text-4xl font-bold mt-10">
-                    Welcome - Click the button below to get started
+                    Swing Trade Stock Screener - Click the button below to get started
                   </h1>
                   <Link
                     href="/auth/signin"
