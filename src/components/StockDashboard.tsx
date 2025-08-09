@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, BarChart3 } from 'lucide-react';
 import StockTable from './StockTable';
 import StockChart from './StockChart';
+import WatchlistTable from './WatchlistTable';
 import { StockData } from '@/lib/fetchStocks';
 import { toast } from 'react-toastify';
 
@@ -12,12 +13,41 @@ interface StockDashboardProps {
   user: any; // User from NextAuth session
 }
 
+interface WatchlistItem {
+  id: string;
+  symbol: string;
+  metrics: {
+    name: string;
+    currentPrice: number;
+    rsi: number;
+    drawdown: number;
+    volume: number;
+    momentumScore: number;
+    addedAt: string;
+  };
+  createdAt: string;
+}
+
 export default function StockDashboard({ user }: StockDashboardProps) {
   const [stocks, setStocks] = useState<StockData[]>([]);
+  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [watchlistLoading, setWatchlistLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedStock, setSelectedStock] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'results' | 'watchlist'>('results');
+
+  // Load watchlist on component mount
+  useEffect(() => {
+    fetchWatchlist();
+  }, []);
+
+  // Load watchlist when switching to watchlist tab
+  useEffect(() => {
+    if (activeTab === 'watchlist') {
+      fetchWatchlist();
+    }
+  }, [activeTab]);
 
   const fetchStocks = async () => {
     setLoading(true);
@@ -54,12 +84,79 @@ export default function StockDashboard({ user }: StockDashboardProps) {
     setSelectedStock(symbol);
   };
 
+  const fetchWatchlist = async () => {
+    setWatchlistLoading(true);
+    try {
+      const response = await fetch('/api/watchlist');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      setWatchlist(data);
+    } catch (err) {
+      console.error('Failed to fetch watchlist:', err);
+      toast.error('Failed to load watchlist');
+    } finally {
+      setWatchlistLoading(false);
+    }
+  };
+
   const handleAddToWatchlist = async (stock: StockData) => {
     try {
-      // TODO: Implement watchlist functionality
+      // Check if already in watchlist
+      const isInWatchlist = watchlist.some(item => item.symbol === stock.Symbol);
+      if (isInWatchlist) {
+        toast.info(`${stock.Symbol} is already in your watchlist`);
+        return;
+      }
+
+      const response = await fetch('/api/watchlist', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          symbol: stock.Symbol,
+          name: stock.Name,
+          currentPrice: stock["Current Price"],
+          rsi: stock["RSI (14)"],
+          drawdown: stock["Drawdown %"],
+          volume: stock["Current Volume"],
+          momentumScore: stock["Momentum Score"],
+          metrics: stock, // Store full stock data
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to add to watchlist');
+      }
+
+      const newWatchlistItem = await response.json();
+      setWatchlist(prev => [newWatchlistItem, ...prev]);
       toast.success(`${stock.Symbol} added to watchlist`);
     } catch (err) {
-      toast.error('Failed to add to watchlist');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to add to watchlist';
+      toast.error(errorMessage);
+    }
+  };
+
+  const handleRemoveFromWatchlist = async (watchlistItem: WatchlistItem) => {
+    try {
+      const response = await fetch(`/api/watchlist/${watchlistItem.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to remove from watchlist');
+      }
+
+      setWatchlist(prev => prev.filter(item => item.id !== watchlistItem.id));
+      toast.success(`${watchlistItem.symbol} removed from watchlist`);
+    } catch (err) {
+      toast.error('Failed to remove from watchlist');
     }
   };
 
@@ -128,8 +225,12 @@ export default function StockDashboard({ user }: StockDashboardProps) {
               }`}
             >
               My Watchlist
-              <span className="ml-2 bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs">
-                0
+              <span className={`ml-2 px-2 py-1 rounded text-xs ${
+                activeTab === 'watchlist'
+                  ? 'bg-blue-100 text-blue-800'
+                  : 'bg-gray-100 text-gray-800'
+              }`}>
+                {watchlist.length}
               </span>
             </button>
           </nav>
@@ -155,6 +256,7 @@ export default function StockDashboard({ user }: StockDashboardProps) {
               ) : (
                 <StockTable
                   stocks={stocks}
+                  watchlist={watchlist.map(item => item.symbol)}
                   onViewChart={handleViewChart}
                   onAddToWatchlist={handleAddToWatchlist}
                 />
@@ -163,14 +265,12 @@ export default function StockDashboard({ user }: StockDashboardProps) {
           )}
 
           {activeTab === 'watchlist' && (
-            <div className="text-center py-12">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Watchlist Coming Soon
-              </h3>
-              <p className="text-gray-500">
-                This feature will be implemented next
-              </p>
-            </div>
+            <WatchlistTable
+              watchlist={watchlist}
+              onViewChart={handleViewChart}
+              onRemoveFromWatchlist={handleRemoveFromWatchlist}
+              loading={watchlistLoading}
+            />
           )}
         </div>
       </div>
