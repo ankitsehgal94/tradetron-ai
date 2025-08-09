@@ -1,11 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchStocks } from '@/lib/fetchStocks';
 
 export async function GET(request: NextRequest) {
   try {
-    const stocks = await fetchStocks();
+    // Proxy the request to your Python API
+    const response = await fetch('http://127.0.0.1:8000/scan-cached', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Python API request failed: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
     
-    return NextResponse.json(stocks, {
+    // Check if the response has the expected structure
+    if (!data.results || !Array.isArray(data.results)) {
+      throw new Error('API response does not contain results array');
+    }
+    
+    return NextResponse.json(data.results, {
       status: 200,
       headers: {
         'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
@@ -27,13 +43,30 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // For future implementation with filters
-    const body = await request.json();
+    const body = await request.json().catch(() => ({}));
     console.log('Received filters:', body);
     
-    // For now, just return the same data as GET
-    const stocks = await fetchStocks();
+    // Proxy the request to your Python API
+    const response = await fetch('http://127.0.0.1:8000/scan-cached', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Python API request failed: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
     
-    return NextResponse.json(stocks, {
+    // Check if the response has the expected structure
+    if (!data.results || !Array.isArray(data.results)) {
+      throw new Error('API response does not contain results array');
+    }
+    
+    return NextResponse.json(data.results, {
       status: 200,
       headers: {
         'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',

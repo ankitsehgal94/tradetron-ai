@@ -1,27 +1,51 @@
 export interface StockData {
-  symbol: string;
-  price: number;
-  rsi: number;
-  macd: number;
-  volume: number;
-  reason: string;
+  Symbol: string;
+  Name: string;
+  "Market Cap (Cr)": number;
+  Category: string;
+  "Current Price": number;
+  "52W High": number;
+  "52W Low": number;
+  "Drawdown %": number;
+  "200 MA": number;
+  "50 MA": number;
+  "20 MA": number;
+  "Distance from 200MA %": number;
+  "Distance from 50MA %": number;
+  "Distance from 20MA %": number;
+  "RSI (14)": number;
+  "Volume Ratio (20D)": number;
+  "Volume Ratio (50D)": number;
+  Sector: string;
+  Industry: string;
+  "Momentum Score": number;
+  "Optimal Drawdown": boolean;
+  "Above 200MA": boolean;
+  "Above 50MA": boolean;
+  "Healthy RSI": boolean;
+  "Is Consolidating": boolean;
+  "Avg Volume (20D)": number;
+  "Current Volume": number;
+  "Data Source": string;
+  "Consolidation Range %": number;
+  "Volatility %": number;
+  "Trend Deviation %": number;
+  "Resistance Touches": number;
+  "Support Touches": number;
 }
 
 export async function fetchStocks(): Promise<StockData[]> {
-  const apiUrl = process.env.STOCK_API_URL;
-  
-  if (!apiUrl) {
-    throw new Error('STOCK_API_URL environment variable is not configured');
-  }
+  // Use the real API endpoint
+  const apiUrl = "http://127.0.0.1:8000/scan-cached";
 
   try {
     const response = await fetch(apiUrl, {
-      method: 'GET',
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      // Add cache revalidation (1 hour)
-      next: { revalidate: 3600 }
+      // Add cache revalidation (1 hour) - only works in server components
+      ...(typeof window === 'undefined' && { next: { revalidate: 3600 } })
     });
 
     if (!response.ok) {
@@ -30,30 +54,23 @@ export async function fetchStocks(): Promise<StockData[]> {
 
     const data = await response.json();
     
-    // Validate that the response is an array
-    if (!Array.isArray(data)) {
-      throw new Error('API response is not an array');
+    // The API returns an object with a "results" array
+    if (!data.results || !Array.isArray(data.results)) {
+      throw new Error('API response does not contain results array');
     }
 
     // Basic validation of data structure
-    const validatedData: StockData[] = data.map((item: any) => {
-      if (typeof item.symbol !== 'string' || 
-          typeof item.price !== 'number' ||
-          typeof item.rsi !== 'number' ||
-          typeof item.macd !== 'number' ||
-          typeof item.volume !== 'number' ||
-          typeof item.reason !== 'string') {
+    const validatedData: StockData[] = data.results.map((item: any) => {
+      // Validate required fields exist
+      if (typeof item.Symbol !== 'string' || 
+          typeof item.Name !== 'string' ||
+          typeof item["Current Price"] !== 'number' ||
+          typeof item["RSI (14)"] !== 'number') {
         throw new Error(`Invalid stock data structure: ${JSON.stringify(item)}`);
       }
       
-      return {
-        symbol: item.symbol,
-        price: item.price,
-        rsi: item.rsi,
-        macd: item.macd,
-        volume: item.volume,
-        reason: item.reason
-      };
+      // Return the item as-is since it matches our interface
+      return item as StockData;
     });
 
     return validatedData;

@@ -7,3 +7,4 @@
 - Added Storybook with Button component and stories, updated .cursorrules with Storybook guidelines
 - Captured screenshot of Button component stories in Storybook
 - Completed major implementation of swing trade stock screener: added Prisma watchlist model, Supabase client utilities, stock fetching API, stock table with sorting/CSV export, TradingView chart modal, and comprehensive dashboard UI with error handling and loading states
+- Updated application to work with real stock API: integrated with http://127.0.0.1:8000/scan-cached endpoint, updated StockData interface to match real API response with Indian stock data including RSI, drawdown %, momentum score, volume metrics, and sector information, bypassed authentication for direct dashboard access

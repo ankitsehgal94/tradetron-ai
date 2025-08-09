@@ -12,11 +12,11 @@ interface StockTableProps {
   onAddToWatchlist: (stock: StockData) => void;
 }
 
-type SortField = keyof StockData;
+type SortField = 'Symbol' | 'Current Price' | 'RSI (14)' | 'Drawdown %' | 'Current Volume' | 'Momentum Score';
 type SortDirection = 'asc' | 'desc';
 
 export default function StockTable({ stocks, onViewChart, onAddToWatchlist }: StockTableProps) {
-  const [sortField, setSortField] = useState<SortField>('symbol');
+  const [sortField, setSortField] = useState<SortField>('Symbol');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const handleSort = (field: SortField) => {
@@ -102,49 +102,70 @@ export default function StockTable({ stocks, onViewChart, onAddToWatchlist }: St
             <thead className="bg-gray-50 border-b">
               <tr>
                 <th className="px-4 py-3 text-left">
-                  <SortButton field="symbol">Symbol</SortButton>
+                  <SortButton field="Symbol">Symbol</SortButton>
                 </th>
                 <th className="px-4 py-3 text-left">
-                  <SortButton field="price">Price</SortButton>
+                  <SortButton field="Current Price">Price</SortButton>
                 </th>
                 <th className="px-4 py-3 text-left">
-                  <SortButton field="rsi">RSI</SortButton>
+                  <SortButton field="RSI (14)">RSI</SortButton>
                 </th>
                 <th className="px-4 py-3 text-left">
-                  <SortButton field="macd">MACD</SortButton>
+                  <SortButton field="Drawdown %">Drawdown</SortButton>
                 </th>
                 <th className="px-4 py-3 text-left">
-                  <SortButton field="volume">Volume</SortButton>
+                  <SortButton field="Current Volume">Volume</SortButton>
                 </th>
                 <th className="px-4 py-3 text-left">
-                  <SortButton field="reason">Reason</SortButton>
+                  <SortButton field="Momentum Score">Score</SortButton>
                 </th>
                 <th className="px-4 py-3 text-left">Actions</th>
               </tr>
             </thead>
             <tbody>
               {sortedStocks.map((stock, index) => (
-                <tr key={stock.symbol} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                  <td className="px-4 py-3 font-medium">{stock.symbol}</td>
-                  <td className="px-4 py-3">${stock.price.toFixed(2)}</td>
+                <tr key={stock.Symbol} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                  <td className="px-4 py-3 font-medium">
+                    <div>
+                      <div className="font-medium">{stock.Symbol}</div>
+                      <div className="text-sm text-gray-500">{stock.Name}</div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">₹{stock["Current Price"].toFixed(2)}</td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-1 rounded text-sm ${
-                      stock.rsi < 30 ? 'bg-green-100 text-green-800' :
-                      stock.rsi > 70 ? 'bg-red-100 text-red-800' :
+                      stock["RSI (14)"] < 30 ? 'bg-green-100 text-green-800' :
+                      stock["RSI (14)"] > 70 ? 'bg-red-100 text-red-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
-                      {stock.rsi.toFixed(2)}
+                      {stock["RSI (14)"].toFixed(2)}
                     </span>
                   </td>
-                  <td className="px-4 py-3">{stock.macd.toFixed(3)}</td>
-                  <td className="px-4 py-3">{stock.volume.toLocaleString()}</td>
-                  <td className="px-4 py-3 text-sm">{stock.reason}</td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-1 rounded text-sm ${
+                      stock["Drawdown %"] > 20 ? 'bg-red-100 text-red-800' :
+                      stock["Drawdown %"] > 10 ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-green-100 text-green-800'
+                    }`}>
+                      {stock["Drawdown %"].toFixed(1)}%
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">{stock["Current Volume"].toLocaleString()}</td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-1 rounded text-sm ${
+                      stock["Momentum Score"] >= 70 ? 'bg-green-100 text-green-800' :
+                      stock["Momentum Score"] >= 40 ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-red-100 text-red-800'
+                    }`}>
+                      {stock["Momentum Score"]}
+                    </span>
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => onViewChart(stock.symbol)}
+                        onClick={() => onViewChart(stock.Symbol)}
                         className="flex items-center gap-1"
                       >
                         <Eye size={14} />

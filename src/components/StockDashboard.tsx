@@ -24,6 +24,7 @@ export default function StockDashboard({ user }: StockDashboardProps) {
     setError(null);
     
     try {
+      // Use Next.js API route as proxy to avoid CORS issues
       const response = await fetch('/api/analyze');
       
       if (!response.ok) {
@@ -36,6 +37,7 @@ export default function StockDashboard({ user }: StockDashboardProps) {
         throw new Error(data.message || 'Failed to fetch stock data');
       }
       
+      // The API proxy returns the results array directly
       setStocks(data);
       toast.success(`Successfully loaded ${data.length} stocks`);
     } catch (err) {
@@ -55,7 +57,7 @@ export default function StockDashboard({ user }: StockDashboardProps) {
   const handleAddToWatchlist = async (stock: StockData) => {
     try {
       // TODO: Implement watchlist functionality
-      toast.success(`${stock.symbol} added to watchlist`);
+      toast.success(`${stock.Symbol} added to watchlist`);
     } catch (err) {
       toast.error('Failed to add to watchlist');
     }
