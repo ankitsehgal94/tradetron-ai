@@ -32,34 +32,23 @@ interface WatchlistItem {
 
 export default function StockDashboard({ user }: StockDashboardProps) {
   const [stocks, setStocks] = useState<StockData[]>([]);
-  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const [watchlistLoading, setWatchlistLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedStock, setSelectedStock] = useState<string | null>(null);
   const [selectedLabel, setSelectedLabel] = useState<string>('All');
-  const [showLabelModal, setShowLabelModal] = useState(false);
-  const [stockToLabel, setStockToLabel] = useState<string | null>(null);
-  const [filteredStocks, setFilteredStocks] = useState<StockData[]>([]);
+  const [currentResults, setCurrentResults] = useState<StockData[]>([]);
   const [activeFilters, setActiveFilters] = useState<any>(null);
+  const [currentFilterName, setCurrentFilterName] = useState<string>('Perfect Momentum');
 
-  // Available labels (like TradingView categories)
+  // Available labels (like TradingView categories) 
   const availableLabels = ['All', 'Favorites', 'Tech', 'Energy', 'Finance', 'Healthcare', 'Consumer', 'Industrial'];
-  const filteredWatchlist = selectedLabel === 'All' 
-    ? watchlist 
-    : watchlist.filter(item => item.label === selectedLabel);
 
-  // Load watchlist and select first stock on component mount
+  // Auto-select first stock when results load
   useEffect(() => {
-    fetchWatchlist();
-  }, []);
-
-  // Auto-select first stock when watchlist loads
-  useEffect(() => {
-    if (watchlist.length > 0 && !selectedStock) {
-      setSelectedStock(watchlist[0].symbol);
+    if (currentResults.length > 0 && !selectedStock) {
+      setSelectedStock(currentResults[0].Symbol);
     }
-  }, [watchlist, selectedStock]);
+  }, [currentResults, selectedStock]);
 
   const fetchStocks = async () => {
     setLoading(true);
@@ -82,12 +71,11 @@ export default function StockDashboard({ user }: StockDashboardProps) {
       // The API proxy returns the results array directly
       setStocks(data);
       
-      // Replace watchlist with fetched stocks (legacy analysis)
-      if (data.length > 0) {
-        await replaceWatchlistWithFilteredStocks(data);
-      }
+      // Set the current results  
+      setCurrentResults(data);
+      setCurrentFilterName('Legacy Analysis');
       
-      toast.success(`Successfully loaded ${data.length} stocks and replaced watchlist`);
+      toast.success(`Successfully loaded ${data.length} stocks`);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       setError(errorMessage);
@@ -102,190 +90,28 @@ export default function StockDashboard({ user }: StockDashboardProps) {
     setSelectedStock(symbol);
   };
 
-  const fetchWatchlist = async () => {
-    setWatchlistLoading(true);
-    try {
-      const response = await fetch('/api/watchlist');
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      setWatchlist(data);
-    } catch (err) {
-      console.error('Failed to fetch watchlist:', err);
-      toast.error('Failed to load watchlist');
-    } finally {
-      setWatchlistLoading(false);
-    }
-  };
-
-  // Replace watchlist with filtered stocks (like TradingView)
-  const replaceWatchlistWithFilteredStocks = async (stocksToAdd: StockData[]) => {
-    try {
-      // First, clear the existing watchlist
-      await clearWatchlist();
-      
-      // Then add all the new filtered stocks
-      const newWatchlistItems = [];
-      for (const stock of stocksToAdd) {
-        try {
-          const response = await fetch('/api/watchlist', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              symbol: stock.Symbol,
-              name: stock.Name,
-              label: 'All', // Default label
-              currentPrice: stock["Current Price"],
-              rsi: stock["RSI (14)"],
-              drawdown: stock["Drawdown %"],
-              volume: stock["Current Volume"],
-              momentumScore: stock["Momentum Score"],
-              metrics: stock, // Store full stock data
-            }),
-          });
-
-          if (response.ok) {
-            const newWatchlistItem = await response.json();
-            newWatchlistItems.push(newWatchlistItem);
-          }
-        } catch (err) {
-          console.error(`Failed to add ${stock.Symbol}:`, err);
-        }
-      }
-      
-      // Update the watchlist state with all new items
-      setWatchlist(newWatchlistItems);
-      
-      if (newWatchlistItems.length > 0) {
-        toast.success(`Watchlist updated with ${newWatchlistItems.length} stocks`);
-      }
-      
-    } catch (error) {
-      console.error('Failed to replace watchlist:', error);
-      toast.error('Failed to update watchlist');
-    }
-  };
-
-  // Clear all items from watchlist
-  const clearWatchlist = async () => {
-    try {
-      // Remove all existing watchlist items
-      const deletePromises = watchlist.map(async (item) => {
-        try {
-          await fetch(`/api/watchlist/${item.id}`, {
-            method: 'DELETE',
-          });
-        } catch (err) {
-          console.error(`Failed to delete ${item.symbol}:`, err);
-        }
-      });
-      
-      await Promise.all(deletePromises);
-      setWatchlist([]);
-      toast.success('Watchlist cleared');
-      
-    } catch (error) {
-      console.error('Failed to clear watchlist:', error);
-      toast.error('Failed to clear watchlist');
-    }
+  // Clear the current results
+  const clearResults = () => {
+    setCurrentResults([]);
+    setSelectedStock(null);
+    setCurrentFilterName('No Filter');
+    toast.success('Results cleared');
   };
 
   const handleAddToWatchlist = async (stock: StockData) => {
-    // For manual additions, we still add individual stocks
-    try {
-      // Check if already in watchlist
-      const isInWatchlist = watchlist.some(item => item.symbol === stock.Symbol);
-      if (isInWatchlist) {
-        toast.info(`${stock.Symbol} is already in your watchlist`);
-        return;
-      }
-
-      const response = await fetch('/api/watchlist', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          symbol: stock.Symbol,
-          name: stock.Name,
-          label: 'All',
-          currentPrice: stock["Current Price"],
-          rsi: stock["RSI (14)"],
-          drawdown: stock["Drawdown %"],
-          volume: stock["Current Volume"],
-          momentumScore: stock["Momentum Score"],
-          metrics: stock,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to add to watchlist');
-      }
-
-      const newWatchlistItem = await response.json();
-      setWatchlist(prev => [newWatchlistItem, ...prev]);
-      toast.success(`${stock.Symbol} added to watchlist`);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to add to watchlist';
-      toast.error(errorMessage);
-    }
+    // This could be used for adding to a real watchlist feature later
+    toast.info(`${stock.Symbol} - Add to watchlist feature coming soon!`);
   };
 
   const handleUpdateStockLabel = async (symbol: string, label: string) => {
-    try {
-      const stockItem = watchlist.find(item => item.symbol === symbol);
-      if (!stockItem) return;
-
-      const response = await fetch(`/api/watchlist/${stockItem.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ label }),
-      });
-
-      if (response.ok) {
-        setWatchlist(prev => prev.map(item => 
-          item.symbol === symbol ? { ...item, label } : item
-        ));
-        toast.success(`${symbol} labeled as ${label}`);
-      }
-    } catch (err) {
-      toast.error('Failed to update label');
-    }
+    // Labels could be implemented later for categorizing stocks
+    toast.success(`${symbol} labeled as ${label} (feature coming soon!)`);
   };
 
-  const handleRemoveFromWatchlist = async (watchlistItem: WatchlistItem) => {
-    try {
-      const response = await fetch(`/api/watchlist/${watchlistItem.id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to remove from watchlist');
-      }
-
-      setWatchlist(prev => prev.filter(item => item.id !== watchlistItem.id));
-      toast.success(`${watchlistItem.symbol} removed from watchlist`);
-    } catch (err) {
-      toast.error('Failed to remove from watchlist');
-    }
-  };
-
-  const handleFilterResults = (filteredStocks: StockData[]) => {
-    setFilteredStocks(filteredStocks);
-    // Replace watchlist with current filter results
-    if (filteredStocks.length > 0) {
-      replaceWatchlistWithFilteredStocks(filteredStocks);
-    } else {
-      // If no results, clear the watchlist
-      clearWatchlist();
+  const handleFilterResults = (filteredStocks: StockData[], filterName?: string) => {
+    setCurrentResults(filteredStocks);
+    if (filterName) {
+      setCurrentFilterName(filterName);
     }
   };
 
@@ -293,8 +119,8 @@ export default function StockDashboard({ user }: StockDashboardProps) {
     setActiveFilters(filters);
   };
 
-  // Determine which stocks to display - filtered stocks or original stocks
-  const displayStocks = filteredStocks.length > 0 ? filteredStocks : stocks;
+  // Current stocks to display are just the current results
+  const displayStocks = currentResults;
 
   return (
     <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
@@ -382,110 +208,93 @@ export default function StockDashboard({ user }: StockDashboardProps) {
         </div>
       </div>
 
-      {/* Right Side - Stock Watchlist */}
+      {/* Right Side - Filter Results */}
       <div className="w-96 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col">
-        {/* Watchlist Header */}
+        {/* Results Header */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              Watchlist
-            </h2>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                Filter Results
+              </h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {currentFilterName}
+              </p>
+            </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-500 dark:text-gray-400">
-                {filteredWatchlist.length} stocks
-                {displayStocks.length > 0 && (
-                  <span className="ml-2 text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
-                    {displayStocks.length} filtered
-                  </span>
-                )}
+                {displayStocks.length} stocks
               </span>
-              {watchlist.length > 0 && (
+              {displayStocks.length > 0 && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={clearWatchlist}
+                  onClick={clearResults}
                   className="p-1 h-auto"
-                  title="Clear watchlist"
+                  title="Clear results"
                 >
                   <Trash2 className="h-3 w-3" />
                 </Button>
               )}
             </div>
           </div>
-
-          {/* Label Filter */}
-          <div className="flex gap-1 mb-4 overflow-x-auto">
-            {availableLabels.map(label => (
-              <Button
-                key={label}
-                size="sm"
-                variant={selectedLabel === label ? "default" : "outline"}
-                onClick={() => setSelectedLabel(label)}
-                className="whitespace-nowrap"
-              >
-                {label}
-                {label !== 'All' && (
-                  <span className="ml-1 text-xs">
-                    ({watchlist.filter(item => item.label === label).length})
-                  </span>
-                )}
-              </Button>
-            ))}
-          </div>
         </div>
 
-        {/* Stock List */}
+        {/* Stock Results List */}
         <div className="flex-1 overflow-auto">
-          {watchlistLoading ? (
+          {loading ? (
             <div className="flex items-center justify-center h-32">
               <RefreshCw className="h-6 w-6 animate-spin text-gray-400" />
             </div>
-          ) : filteredWatchlist.length === 0 ? (
+          ) : displayStocks.length === 0 ? (
             <div className="text-center py-12 px-4">
               <BarChart3 className="mx-auto h-12 w-12 text-gray-400 mb-4" />
               <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
-                No Stocks in {selectedLabel}
+                No Filter Results
               </h3>
               <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                Use the filter above to scan for stocks or run legacy analysis
+                Use the filters above to scan for stocks matching your criteria
               </p>
             </div>
           ) : (
             <div className="p-2">
-              {filteredWatchlist.map(item => (
+              {displayStocks.map((stock, index) => (
                 <div
-                  key={item.id}
+                  key={`${stock.Symbol}-${index}`}
                   className={`p-3 mb-2 rounded-lg border cursor-pointer transition-colors ${
-                    selectedStock === item.symbol
+                    selectedStock === stock.Symbol
                       ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700'
                       : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600'
                   }`}
-                  onClick={() => setSelectedStock(item.symbol)}
+                  onClick={() => setSelectedStock(stock.Symbol)}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div>
                       <div className="font-medium text-sm text-gray-900 dark:text-gray-100">
-                        {item.symbol}
+                        {stock.Symbol}
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                        {item.metrics.name}
+                        {stock.Name}
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        ${item.metrics.currentPrice?.toFixed(2) || 'N/A'}
+                        ₹{stock["Current Price"]?.toFixed(2) || 'N/A'}
                       </div>
-                      {item.label && (
-                        <div className="text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 px-1 rounded">
-                          {item.label}
-                        </div>
-                      )}
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {stock.Category}
+                      </div>
                     </div>
                   </div>
                   
                   <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                    <span>RSI: {item.metrics.rsi?.toFixed(1) || 'N/A'}</span>
-                    <span>Score: {item.metrics.momentumScore?.toFixed(1) || 'N/A'}</span>
+                    <span>RSI: {stock["RSI (14)"]?.toFixed(1) || 'N/A'}</span>
+                    <span>Score: {stock["Momentum Score"]?.toFixed(0) || 'N/A'}</span>
+                  </div>
+                  
+                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <span>Drawdown: {stock["Drawdown %"]?.toFixed(1) || 'N/A'}%</span>
+                    <span>Vol: {(stock["Volume Ratio (20D)"] || 0).toFixed(1)}x</span>
                   </div>
                 </div>
               ))}

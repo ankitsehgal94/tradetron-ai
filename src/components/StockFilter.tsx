@@ -39,7 +39,7 @@ interface QuickScenario {
 }
 
 interface StockFilterProps {
-  onFilterResults: (stocks: StockData[]) => void;
+  onFilterResults: (stocks: StockData[], filterName?: string) => void;
   onFilterChange: (filters: FilterParams) => void;
   loading?: boolean;
 }
@@ -238,7 +238,14 @@ export default function StockFilter({ onFilterResults, onFilterChange, loading =
       const stocksData = apiResponse.data || [];
       const totalCount = apiResponse.total || stocksData.length;
       
-      onFilterResults(stocksData);
+      // Determine filter name based on active scenario or custom filters
+      let filterName = 'Custom Filter';
+      if (filterParams.scenario) {
+        const scenario = quickScenarios.find(s => s.filters.scenario === filterParams.scenario);
+        filterName = scenario ? scenario.label : filterParams.scenario.replace('_', ' ');
+      }
+
+      onFilterResults(stocksData, filterName);
       toast.success(`Found ${stocksData.length} stocks matching criteria (${totalCount} total available)`);
       
     } catch (error) {

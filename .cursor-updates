@@ -1,9 +1,9 @@
-- Revamped UI to TradingView-style layout with charts on left, watchlist on right
-- Added comprehensive stock analysis filter interface with quick scenario buttons and advanced filtering options
+- Revamped UI to TradingView-style layout with charts on left, filter results on right
+- Added comprehensive stock analysis filter interface with quick scenario buttons and advanced filtering options  
 - Integrated http://localhost:8000/api/stocks/scan API with Next.js proxy for CORS handling
 - Fixed API calls to match actual API documentation structure with proper scenario parameters
-- Fixed watchlist to replace stocks instead of accumulating from different filters
+- Refactored "watchlist" to be a simple "Filter Results" display area that shows current filter results directly
 - Fixed scenario API calls to only send scenario and limit parameters (e.g., Perfect Momentum only sends scenario=perfect_momentum&limit=20)
 - Added default Perfect Momentum API call on app load for immediate stock results
-- Added stock labeling system for categorization (Tech, Energy, Finance, etc.)
-- All fetched stocks now auto-populate in watchlist with TradingView-style workflow
+- Simplified logic by removing complex watchlist API calls and just displaying filtered stocks directly
+- Enhanced stock cards with better formatting showing price, RSI, momentum score, drawdown, and volume ratio
