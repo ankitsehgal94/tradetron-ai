@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { symbol, name, currentPrice, rsi, drawdown, volume, momentumScore, metrics } = body;
+    const { symbol, name, label, currentPrice, rsi, drawdown, volume, momentumScore, metrics } = body;
 
     // Validate required fields
     if (!symbol) {
@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
     const watchlistItem = await watchlistStorage.create({
       userId: MOCK_USER_ID,
       symbol,
+      label: label || 'All', // Default to 'All' if no label provided
       metrics: {
         name,
         currentPrice,

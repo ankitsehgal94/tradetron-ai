@@ -5,6 +5,7 @@ interface WatchlistItem {
   id: string;
   userId: string;
   symbol: string;
+  label?: string; // TradingView-style labels
   metrics: {
     name: string;
     currentPrice: number;
@@ -44,12 +45,14 @@ export const watchlistStorage = {
   create: async (data: {
     userId: string;
     symbol: string;
+    label?: string;
     metrics: any;
   }): Promise<WatchlistItem> => {
     const newItem: WatchlistItem = {
       id: `watchlist_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       userId: data.userId,
       symbol: data.symbol,
+      label: data.label || 'All',
       metrics: data.metrics,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -57,6 +60,20 @@ export const watchlistStorage = {
 
     watchlistStore.push(newItem);
     return newItem;
+  },
+
+  // Update a watchlist item
+  update: async (id: string, data: Partial<WatchlistItem>): Promise<WatchlistItem | null> => {
+    const index = watchlistStore.findIndex(item => item.id === id);
+    if (index !== -1) {
+      watchlistStore[index] = {
+        ...watchlistStore[index],
+        ...data,
+        updatedAt: new Date().toISOString(),
+      };
+      return watchlistStore[index];
+    }
+    return null;
   },
 
   // Delete a watchlist item

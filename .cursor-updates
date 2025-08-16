@@ -1,14 +1,9 @@
-# Cursor Updates
-
-- Ran production build verification - build completed successfully with no TypeScript or compilation errors
-- Performed build check on Next.js app with tRPC and Tailwind configuration
-- Successfully ran production build with Prisma generation and Next.js compilation
-- Fixed dynamic route warning by adding force-dynamic config to root page
-- Added Storybook with Button component and stories, updated .cursorrules with Storybook guidelines
-- Captured screenshot of Button component stories in Storybook
-- Completed major implementation of swing trade stock screener: added Prisma watchlist model, Supabase client utilities, stock fetching API, stock table with sorting/CSV export, TradingView chart modal, and comprehensive dashboard UI with error handling and loading states
-- Updated application to work with real stock API: integrated with http://127.0.0.1:8000/scan-cached endpoint, updated StockData interface to match real API response with Indian stock data including RSI, drawdown %, momentum score, volume metrics, and sector information, bypassed authentication for direct dashboard access
-- Fixed text visibility issues in stock table: added proper text colors for light/dark mode, improved contrast for headers and table content, updated sort buttons with proper hover states
-- Implemented complete watchlist feature: created API routes for CRUD operations, added WatchlistTable component with sorting and remove functionality, integrated real-time state management, updated StockTable to show watchlist status, added watchlist count to tab badges
-- Fixed database dependency by implementing in-memory storage solution for demo purposes, resolved watchlist API errors
-- Enhanced chart modal UX: added background click to close, ESC key support, improved dark mode styling and accessibility
+- Revamped UI to TradingView-style layout with charts on left, watchlist on right
+- Added comprehensive stock analysis filter interface with quick scenario buttons and advanced filtering options
+- Integrated http://localhost:8000/api/stocks/scan API with Next.js proxy for CORS handling
+- Fixed API calls to match actual API documentation structure with proper scenario parameters
+- Fixed watchlist to replace stocks instead of accumulating from different filters
+- Fixed scenario API calls to only send scenario and limit parameters (e.g., Perfect Momentum only sends scenario=perfect_momentum&limit=20)
+- Added default Perfect Momentum API call on app load for immediate stock results
+- Added stock labeling system for categorization (Tech, Energy, Finance, etc.)
+- All fetched stocks now auto-populate in watchlist with TradingView-style workflow
