@@ -73,80 +73,114 @@ export default function StockChart({ symbol, isOpen, onClose, isEmbedded = false
         chartContainerRef.current.innerHTML = '';
       }
 
-      // Create widget container
-      const widgetContainer = document.createElement('div');
-      widgetContainer.className = 'tradingview-widget-container';
-      widgetContainer.style.height = '100%';
-      widgetContainer.style.width = '100%';
+      // Add loading indicator
+      const loadingDiv = document.createElement('div');
+      loadingDiv.className = 'flex items-center justify-center h-full';
+      loadingDiv.innerHTML = '<div class="text-gray-500">Loading chart...</div>';
+      chartContainerRef.current.appendChild(loadingDiv);
 
-      const widgetDiv = document.createElement('div');
-      widgetDiv.className = 'tradingview-widget-container__widget';
-      widgetDiv.style.height = 'calc(100% - 32px)';
-      widgetDiv.style.width = '100%';
-
-      const script = document.createElement('script');
-      script.type = 'text/javascript';
-      script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
-      script.async = true;
-
-              // Widget configuration with your specific indicators
-        const config = {
-          autosize: true,
-          symbol: symbol,
-          interval: selectedInterval,
-          timezone: "Etc/UTC",
-          theme: chartPreferences.theme.toLowerCase(),
-          style: "1",
-          locale: "en",
-          allow_symbol_change: true,
-          calendar: false,
-          support_host: "https://www.tradingview.com",
-          // Add your specific indicators with exact settings
-          studies: [
-            {
-              id: "Volume@tv-basicstudies",
-              inputs: {
-                "length": 9,
-                "smoothingLine": "SMA",
-                "smoothingLength": 9
-              }
-            },
-            {
-              id: "MAExp@tv-basicstudies",
-              inputs: {
-                "length": 200,
-                "source": "close"
-              }
-            },
-            {
-              id: "BB@tv-basicstudies",
-              inputs: {
-                "length": 20,
-                "mult": 2,
-                "source": "close"
-              }
+      // Widget configuration with your specific indicators
+      const config = {
+        autosize: true,
+        symbol: symbol,
+        interval: selectedInterval,
+        timezone: "Etc/UTC",
+        theme: chartPreferences.theme.toLowerCase(),
+        style: "1",
+        locale: "en",
+        allow_symbol_change: true,
+        calendar: false,
+        support_host: "https://www.tradingview.com",
+        // Add your specific indicators with exact settings
+        studies: [
+          {
+            id: "Volume@tv-basicstudies",
+            inputs: {
+              "length": 9,
+              "smoothingLine": "SMA",
+              "smoothingLength": 9
             }
-          ],
-          // Save chart layout automatically
-          save_image: false,
-          hide_top_toolbar: false,
-          hide_legend: false,
-          hide_side_toolbar: false,
-          details: true,
-          hotlist: true,
-          withdateranges: true
-        };
+          },
+          {
+            id: "MAExp@tv-basicstudies",
+            inputs: {
+              "length": 200,
+              "source": "close"
+            }
+          },
+          {
+            id: "BB@tv-basicstudies",
+            inputs: {
+              "length": 20,
+              "mult": 2,
+              "source": "close"
+            }
+          }
+        ],
+        // Save chart layout automatically
+        save_image: false,
+        hide_top_toolbar: false,
+        hide_legend: false,
+        hide_side_toolbar: false,
+        details: true,
+        hotlist: true,
+        withdateranges: true
+      };
 
-      script.innerHTML = JSON.stringify(config);
+      // Use proper method to avoid iframe contentWindow issues
+      const initWidget = () => {
+        try {
+          // Clear loading indicator
+          if (chartContainerRef.current) {
+            chartContainerRef.current.innerHTML = '';
+          }
 
-      widgetContainer.appendChild(widgetDiv);
-      widgetContainer.appendChild(script);
-      
-      if (chartContainerRef.current) {
-        chartContainerRef.current.appendChild(widgetContainer);
-      }
+          // Create widget container with proper structure
+          const widgetContainer = document.createElement('div');
+          widgetContainer.className = 'tradingview-widget-container';
+          widgetContainer.style.height = '100%';
+          widgetContainer.style.width = '100%';
 
-      widgetRef.current = widgetContainer;
+          const widgetDiv = document.createElement('div');
+          widgetDiv.className = 'tradingview-widget-container__widget';
+          widgetDiv.style.height = 'calc(100% - 32px)';
+          widgetDiv.style.width = '100%';
+
+          const script = document.createElement('script');
+          script.type = 'text/javascript';
+          script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+          script.async = true;
+
+          // Use textContent instead of innerHTML to avoid parsing issues
+          script.textContent = JSON.stringify(config);
+
+          // Add error handling
+          script.onerror = () => {
+            console.error('Failed to load TradingView widget');
+            if (chartContainerRef.current) {
+              chartContainerRef.current.innerHTML = '<div class="flex items-center justify-center h-full text-red-500">Failed to load chart</div>';
+            }
+          };
+
+          widgetContainer.appendChild(widgetDiv);
+          widgetContainer.appendChild(script);
+          
+          if (chartContainerRef.current) {
+            chartContainerRef.current.appendChild(widgetContainer);
+          }
+
+          widgetRef.current = widgetContainer;
+        } catch (error) {
+          console.error('Error initializing TradingView widget:', error);
+          if (chartContainerRef.current) {
+            chartContainerRef.current.innerHTML = '<div class="flex items-center justify-center h-full text-red-500">Chart initialization failed</div>';
+          }
+        }
+      };
+
+      // Small delay to ensure DOM is ready
+      const timer = setTimeout(initWidget, 100);
+      return () => clearTimeout(timer);
     }
   }, [symbol, selectedInterval, chartPreferences.theme, isOpen, isEmbedded]);
 
