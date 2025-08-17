@@ -2,10 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, BarChart3, Plus, Filter, Tag, Trash2 } from 'lucide-react';
-import StockTable from './StockTable';
+import { RefreshCw, BarChart3, Trash2 } from 'lucide-react';
 import StockChart from './StockChart';
-import WatchlistTable from './WatchlistTable';
 import StockFilter from './StockFilter';
 import { StockData } from '@/lib/fetchStocks';
 import { toast } from 'react-toastify';
@@ -14,34 +12,16 @@ interface StockDashboardProps {
   user: any; // User from NextAuth session
 }
 
-interface WatchlistItem {
-  id: string;
-  symbol: string;
-  label?: string; // TradingView-style labels like "Tech", "Energy", "Favorites", etc.
-  metrics: {
-    name: string;
-    currentPrice: number;
-    rsi: number;
-    drawdown: number;
-    volume: number;
-    momentumScore: number;
-    addedAt: string;
-  };
-  createdAt: string;
-}
+// Removed unused WatchlistItem interface since we're using StockData directly
 
 export default function StockDashboard({ user }: StockDashboardProps) {
   const [stocks, setStocks] = useState<StockData[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedStock, setSelectedStock] = useState<string | null>(null);
-  const [selectedLabel, setSelectedLabel] = useState<string>('All');
   const [currentResults, setCurrentResults] = useState<StockData[]>([]);
   const [activeFilters, setActiveFilters] = useState<any>(null);
   const [currentFilterName, setCurrentFilterName] = useState<string>('Perfect Momentum');
-
-  // Available labels (like TradingView categories) 
-  const availableLabels = ['All', 'Favorites', 'Tech', 'Energy', 'Finance', 'Healthcare', 'Consumer', 'Industrial'];
 
   // Auto-select first stock when results load
   useEffect(() => {
@@ -103,10 +83,7 @@ export default function StockDashboard({ user }: StockDashboardProps) {
     toast.info(`${stock.Symbol} - Add to watchlist feature coming soon!`);
   };
 
-  const handleUpdateStockLabel = async (symbol: string, label: string) => {
-    // Labels could be implemented later for categorizing stocks
-    toast.success(`${symbol} labeled as ${label} (feature coming soon!)`);
-  };
+  // Removed handleUpdateStockLabel - not needed for current implementation
 
   const handleFilterResults = (filteredStocks: StockData[], filterName?: string) => {
     setCurrentResults(filteredStocks);
@@ -123,68 +100,57 @@ export default function StockDashboard({ user }: StockDashboardProps) {
   const displayStocks = currentResults;
 
   return (
-    <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
-      {/* Left Side - Chart Area */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
+    <div className="flex h-screen w-full bg-gray-50 dark:bg-gray-900 overflow-hidden">
+      {/* Main Content Area - Chart */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Compact Header */}
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+              <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">
                 {selectedStock || 'Trading Dashboard'}
               </h1>
               {selectedStock && (
-                <div className="flex items-center gap-2">
-                  {availableLabels.filter(label => label !== 'All').map(label => (
-                    <Button
-                      key={label}
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleUpdateStockLabel(selectedStock, label)}
-                      className="h-6 px-2 text-xs"
-                    >
-                      <Tag className="h-3 w-3 mr-1" />
-                      {label}
-                    </Button>
-                  ))}
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  {currentFilterName}
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={fetchStocks}
-                disabled={loading}
-                className="flex items-center gap-2"
-                size="sm"
-              >
-                {loading ? (
-                  <RefreshCw className="h-4 w-4 animate-spin" />
-                ) : (
-                  <BarChart3 className="h-4 w-4" />
-                )}
-                {loading ? 'Analyzing...' : 'Legacy Analysis'}
-              </Button>
-            </div>
+            <Button
+              onClick={fetchStocks}
+              disabled={loading}
+              className="flex items-center gap-2"
+              size="sm"
+            >
+              {loading ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <BarChart3 className="h-4 w-4" />
+              )}
+              {loading ? 'Analyzing...' : 'Legacy Analysis'}
+            </Button>
           </div>
 
           {error && (
-            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+            <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
               {error}
             </div>
           )}
         </div>
 
-        {/* Stock Filter */}
-        <StockFilter
-          onFilterResults={handleFilterResults}
-          onFilterChange={handleFilterChange}
-          loading={loading}
-        />
+        {/* Compact Stock Filter */}
+        <div className="border-b border-gray-200 dark:border-gray-700">
+          <StockFilter
+            onFilterResults={handleFilterResults}
+            onFilterChange={handleFilterChange}
+            loading={loading}
+          />
+        </div>
 
-        {/* Chart Container */}
-        <div className="flex-1 p-4">
+        {/* Full Chart Container */}
+        <div className="flex-1 p-1">
           {selectedStock ? (
-            <div className="h-full bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div className="h-full w-full bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 overflow-hidden">
               <StockChart
                 symbol={selectedStock}
                 isOpen={true}
@@ -193,14 +159,14 @@ export default function StockDashboard({ user }: StockDashboardProps) {
               />
             </div>
           ) : (
-            <div className="h-full bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center">
+            <div className="h-full bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 flex items-center justify-center">
               <div className="text-center">
                 <BarChart3 className="mx-auto h-16 w-16 text-gray-400 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
                   Select a Stock to View Chart
                 </h3>
                 <p className="text-gray-500 dark:text-gray-400">
-                  Choose a stock from the watchlist to display its technical analysis chart
+                  Choose a stock from the results to display its chart
                 </p>
               </div>
             </div>
@@ -208,40 +174,35 @@ export default function StockDashboard({ user }: StockDashboardProps) {
         </div>
       </div>
 
-      {/* Right Side - Filter Results */}
-      <div className="w-96 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col">
-        {/* Results Header */}
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+      {/* Right Sidebar - Filter Results */}
+      <div className="w-72 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col flex-shrink-0 h-full">
+        {/* Compact Results Header */}
+        <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="min-w-0 flex-1">
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
                 Filter Results
               </h2>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {currentFilterName}
+              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                {currentFilterName} • {displayStocks.length} stocks
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                {displayStocks.length} stocks
-              </span>
-              {displayStocks.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearResults}
-                  className="p-1 h-auto"
-                  title="Clear results"
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              )}
-            </div>
+            {displayStocks.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearResults}
+                className="p-1 h-auto flex-shrink-0"
+                title="Clear results"
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            )}
           </div>
         </div>
 
-        {/* Stock Results List */}
-        <div className="flex-1 overflow-auto">
+        {/* Stock Results List - Fixed height with internal scrolling */}
+        <div className="flex-1 overflow-auto min-h-0">
           {loading ? (
             <div className="flex items-center justify-center h-32">
               <RefreshCw className="h-6 w-6 animate-spin text-gray-400" />
@@ -257,19 +218,19 @@ export default function StockDashboard({ user }: StockDashboardProps) {
               </p>
             </div>
           ) : (
-            <div className="p-2">
+            <div className="p-1">
               {displayStocks.map((stock, index) => (
                 <div
                   key={`${stock.Symbol}-${index}`}
-                  className={`p-3 mb-2 rounded-lg border cursor-pointer transition-colors ${
+                  className={`p-2 mb-1 rounded border cursor-pointer transition-colors ${
                     selectedStock === stock.Symbol
                       ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700'
                       : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600'
                   }`}
                   onClick={() => setSelectedStock(stock.Symbol)}
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="min-w-0 flex-1">
                       <div className="font-medium text-sm text-gray-900 dark:text-gray-100">
                         {stock.Symbol}
                       </div>
@@ -277,7 +238,7 @@ export default function StockDashboard({ user }: StockDashboardProps) {
                         {stock.Name}
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right flex-shrink-0">
                       <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         ₹{stock["Current Price"]?.toFixed(2) || 'N/A'}
                       </div>
@@ -293,7 +254,7 @@ export default function StockDashboard({ user }: StockDashboardProps) {
                   </div>
                   
                   <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    <span>Drawdown: {stock["Drawdown %"]?.toFixed(1) || 'N/A'}%</span>
+                    <span>DD: {stock["Drawdown %"]?.toFixed(1) || 'N/A'}%</span>
                     <span>Vol: {(stock["Volume Ratio (20D)"] || 0).toFixed(1)}x</span>
                   </div>
                 </div>

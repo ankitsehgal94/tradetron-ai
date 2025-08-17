@@ -265,14 +265,37 @@ export default function StockFilter({ onFilterResults, onFilterChange, loading =
   }, []); // Empty dependency array means this runs once on mount
 
   return (
-    <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-      <div className="p-4">
-        {/* Quick Scenario Buttons */}
-        <div className="mb-6">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
-            Quick Scenarios
-          </h3>
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
+    <div className="bg-white dark:bg-gray-800">
+      <div className="px-3 py-1.5">
+        {/* Compact Quick Scenario Buttons */}
+        <div className="mb-3">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+              Quick Scenarios
+            </h3>
+            <div className="flex gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAdvanced(!showAdvanced)}
+                className="flex items-center gap-1 h-7 px-2 text-xs"
+              >
+                <Sliders className="h-3 w-3" />
+                Advanced
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleReset}
+                className="flex items-center gap-1 h-7 px-2 text-xs"
+              >
+                <RotateCcw className="h-3 w-3" />
+                Reset
+              </Button>
+            </div>
+          </div>
+          
+          <div className="flex flex-wrap gap-2">
             {quickScenarios.map((scenario) => {
               const IconComponent = scenario.icon;
               return (
@@ -282,10 +305,10 @@ export default function StockFilter({ onFilterResults, onFilterChange, loading =
                   size="sm"
                   onClick={() => handleScenarioClick(scenario)}
                   disabled={loading}
-                  className="flex items-center gap-2 p-3 h-auto flex-col text-center"
+                  className="flex items-center gap-2 h-8 px-3"
                   title={scenario.description}
                 >
-                  <IconComponent className="h-4 w-4" />
+                  <IconComponent className="h-3 w-3" />
                   <span className="text-xs">{scenario.label}</span>
                 </Button>
               );
@@ -295,42 +318,18 @@ export default function StockFilter({ onFilterResults, onFilterChange, loading =
               size="sm"
               onClick={handleViewAll}
               disabled={loading}
-              className="flex items-center gap-2 p-3 h-auto flex-col text-center"
+              className="flex items-center gap-2 h-8 px-3"
               title="View all available stocks"
             >
-              <Search className="h-4 w-4" />
-              <span className="text-xs">View All Stocks</span>
+              <Search className="h-3 w-3" />
+              <span className="text-xs">View All</span>
             </Button>
           </div>
         </div>
 
-        {/* Advanced Filter Toggle */}
-        <div className="flex items-center justify-between mb-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center gap-2"
-          >
-            <Sliders className="h-4 w-4" />
-            Advanced Filters
-          </Button>
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleReset}
-              className="flex items-center gap-2"
-            >
-              <RotateCcw className="h-3 w-3" />
-              Reset
-            </Button>
-          </div>
-        </div>
-
-        {/* Advanced Filter Panel */}
+        {/* Compact Advanced Filter Panel */}
         {showAdvanced && (
-          <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-4 bg-gray-50 dark:bg-gray-900">
+          <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-2 space-y-2 bg-gray-50 dark:bg-gray-900">
             {/* Momentum Score Range */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -486,14 +485,15 @@ export default function StockFilter({ onFilterResults, onFilterChange, loading =
             </div>
 
             {/* Apply Filter Button */}
-            <div className="pt-4 border-t border-gray-200 dark:border-gray-600">
+            <div className="pt-3 border-t border-gray-200 dark:border-gray-600">
               <Button
                 onClick={handleAdvancedFilter}
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2"
+                className="w-full flex items-center justify-center gap-2 h-8"
+                size="sm"
               >
-                <Filter className="h-4 w-4" />
-                Apply Advanced Filters
+                <Filter className="h-3 w-3" />
+                Apply Filters
               </Button>
             </div>
           </div>

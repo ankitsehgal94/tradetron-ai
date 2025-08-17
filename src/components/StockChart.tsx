@@ -180,9 +180,9 @@ export default function StockChart({ symbol, isOpen, onClose, isEmbedded = false
   if (isEmbedded) {
     return (
       <div className="h-full flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-4">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{symbol}</h2>
+        <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-3">
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{symbol}</h2>
             <div className="flex gap-1">
               {timeframes.map((tf) => (
                 <Button
@@ -190,7 +190,7 @@ export default function StockChart({ symbol, isOpen, onClose, isEmbedded = false
                   size="sm"
                   variant={timeframe === tf.value ? "default" : "outline"}
                   onClick={() => setTimeframe(tf.value)}
-                  className="px-3 py-1 text-sm"
+                  className="px-2 py-1 text-xs h-6"
                 >
                   {tf.label}
                 </Button>
@@ -201,11 +201,11 @@ export default function StockChart({ symbol, isOpen, onClose, isEmbedded = false
             Volume SMA 9, EMA 200, Bollinger Bands 20
           </div>
         </div>
-        <div className="flex-1 p-4">
+        <div className="flex-1 p-1">
           <div 
             ref={chartContainerRef}
             className="w-full h-full"
-            style={{ minHeight: '400px' }}
+            style={{ minHeight: '500px', height: '100%' }}
           />
         </div>
       </div>
